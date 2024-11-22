@@ -1,0 +1,25 @@
+{
+	"openapi":"3.0.3",
+	"info": {
+	  "title":"Forum Server",
+	  "version":"1.0"
+	},
+	"servers": [
+	  {"url":"http://localhost:4000/api"}
+	],
+	"paths": {
+		"/": {
+			"summary": "Test Endpoint",
+			"description": "Test Endpoint",
+			"get": {
+				"description": "",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "OK"
+					}
+				}
+			}
+		}
+	}
+  }
