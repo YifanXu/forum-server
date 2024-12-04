@@ -2,7 +2,6 @@ import express from 'express'
 import http from 'http'
 import cors from 'cors'
 import swaggerUI from 'swagger-ui-express'
-import apiRouter from './routes/api'
 import swaggerDoc from '../specification.json'
 
 async function main() {
@@ -13,8 +12,6 @@ async function main() {
 	app.get('/liveliness', (req, res) => {
 		res.status(200)
 	})
-
-	app.use('/api', apiRouter)
 
 	// Serve documentations
 	app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc));
