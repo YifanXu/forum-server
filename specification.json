@@ -7,19 +7,122 @@
 	"servers": [
 	  {"url":"http://localhost:4000/api"}
 	],
-	"paths": {
-		"/": {
-			"summary": "Test Endpoint",
-			"description": "Test Endpoint",
-			"get": {
-				"description": "",
-				"parameters": [],
-				"responses": {
-					"200": {
-						"description": "OK"
-					}
-				}
-			}
-		}
-	}
+	
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Home Page",
+        "description": "Render the homepage of the forum.",
+        "responses": {
+          "200": {
+            "description": "Homepage rendered successfully"
+          }
+        }
+      }
+    },
+    "/login": {
+      "get": {
+        "summary": "Login Page",
+        "description": "Render the login page.",
+        "responses": {
+          "200": {
+            "description": "Login page rendered successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Login User",
+        "description": "Authenticate a user with username and password.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirect to home page after successful login"
+          },
+          "401": {
+            "description": "Authentication failed, redirected back to login"
+          }
+        }
+      }
+    },
+    "/register": {
+      "get": {
+        "summary": "Registration Page",
+        "description": "Render the registration page.",
+        "responses": {
+          "200": {
+            "description": "Registration page rendered successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register User",
+        "description": "Register a new user with username, email, and password.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "firstname": {
+                    "type": "string"
+                  },
+                  "lastname": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["username", "firstname", "lastname", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirect to login page after successful registration"
+          },
+          "500": {
+            "description": "Error during registration, user not created"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "summary": "Logout User",
+        "description": "Logout a logged-in user.",
+        "responses": {
+          "302": {
+            "description": "Redirect to login page after logout"
+          }
+        }
+      }
+    }
   }
+}
