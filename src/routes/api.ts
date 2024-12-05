@@ -1,9 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
+// import bcrypt from 'bcrypt';
 import passport from 'passport';
 import session from 'express-session';
-import pool from '../db';  // Import the pool for DB interaction
-import initializePassport from '../passport-config';
+import mysql from 'mysql2/promise';
+import { db_middleware } from '../db';
+import authRouter, { sessionMiddleware } from './auth';
 import { AuthToken, Forum, ForumStats, Post, Thread } from './types';
 
 const router = express();
@@ -36,64 +37,18 @@ if (process.env.NODE_ENV !== 'production') {
 
 router.set('view-engine', 'ejs');
 router.use(express.urlencoded({ extended: false }));
-router.use(session({
-    secret: process.env.SESSION_SECRET || 'default-secret',
-    resave: false,
-    saveUninitialized: false
-}));
+// router.use(session({
+//     secret: process.env.SESSION_SECRET || 'default-secret',
+//     resave: false,
+//     saveUninitialized: false
+// }));
 
-router.use(passport.initialize());
-router.use(passport.session());
-
-// Initialize Passport with database functions
-initializePassport(
-    passport,
-    (username: string) => pool.query('SELECT * FROM users WHERE username = ?', [username]),
-    (id: string) => pool.query('SELECT * FROM users WHERE id = ?', [id])
-);
+router.use('/auth', authRouter)
 
 // Route for homepage
 router.get('/', (req: Request, res: Response) => {
     res.render('index.ejs');
-});
-
-// Login route
-router.get('/login', checkNotAuthenticated, (req: Request, res: Response) => {
-    res.render('login.ejs');
-});
-
-router.post('/login', checkNotAuthenticated, passport.authenticate('local', {
-    successRedirect: '/',
-    failureRedirect: '/login',
-    failureFlash: true
-}));
-
-// Registration routes
-router.get('/register', checkNotAuthenticated, (req: Request, res: Response) => {
-    res.render('register.ejs');
-});
-
-router.post('/register', checkNotAuthenticated, async (req: Request<{}, {}, RegisterRequestBody>, res: Response) => {
-    const { username, firstname, lastname, password } = req.body;
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query(
-            'INSERT INTO users (username, firstname, lastname, password) VALUES (?, ?, ?, ?)',
-            [username, firstname, lastname, hashedPassword]
-        );
-        res.redirect('/login');
-    } catch (error) {
-        console.error(error);
-        res.redirect('/register');
-    }
-});
-
-function checkNotAuthenticated(req: Request, res: Response, next: NextFunction) {
-    if (req.isAuthenticated && req.isAuthenticated()) {
-        return res.redirect('/');
-    }
-    next();
-}
+})
 
 router.get('/', (req, res) => {
     res.send('Hello world!');
@@ -243,10 +198,14 @@ router.post('/forums/:forumId/subscribe', (req, res) => {
 });
 
 router.post('/threads/:threadId/subscribe', (req, res) => {
-    const { subscribed } = req.body;
-    const threadId = parseInt(req.params.threadId);
-    // Simulate subscription
-    res.status(204).send();
+	const { subscribed } = req.body;
+	const user = req.user;
+    
+	const db: mysql.PoolConnection = res.locals.connnection
+
+	// if (subscribed) {
+	// 	// db.execute('INSERT INTO `user-thread` (userID, threadID) VALUES (?, ?)', [user])
+	// }
 });
 
 export default router;

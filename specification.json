@@ -21,16 +21,7 @@
 		  }
 		}
 	  },
-	  "/login": {
-		"get": {
-		  "summary": "Login Page",
-		  "description": "Render the login page.",
-		  "responses": {
-			"200": {
-			  "description": "Login page rendered successfully"
-			}
-		  }
-		},
+	  "/auth/login": {
 		"post": {
 		  "summary": "Login User",
 		  "description": "Authenticate a user with username and password.",
@@ -54,7 +45,7 @@
 			}
 		  },
 		  "responses": {
-			"302": {
+			"200": {
 			  "description": "Redirect to home page after successful login"
 			},
 			"401": {
@@ -63,16 +54,7 @@
 		  }
 		}
 	  },
-	  "/register": {
-		"get": {
-		  "summary": "Registration Page",
-		  "description": "Render the registration page.",
-		  "responses": {
-			"200": {
-			  "description": "Registration page rendered successfully"
-			}
-		  }
-		},
+	  "/auth/register": {
 		"post": {
 		  "summary": "Register User",
 		  "description": "Register a new user with username, email, and password.",
@@ -86,41 +68,21 @@
 					"username": {
 					  "type": "string"
 					},
-					"firstname": {
-					  "type": "string"
-					},
-					"lastname": {
-					  "type": "string"
-					},
-					"email": {
-					  "type": "string"
-					},
 					"password": {
 					  "type": "string"
 					}
 				  },
-				  "required": ["username", "firstname", "lastname", "email", "password"]
+				  "required": ["username", "password"]
 				}
 			  }
 			}
 		  },
 		  "responses": {
-			"302": {
+			"201": {
 			  "description": "Redirect to login page after successful registration"
 			},
 			"500": {
 			  "description": "Error during registration, user not created"
-			}
-		  }
-		}
-	  },
-	  "/logout": {
-		"post": {
-		  "summary": "Logout User",
-		  "description": "Logout a logged-in user.",
-		  "responses": {
-			"302": {
-			  "description": "Redirect to login page after logout"
 			}
 		  }
 		}

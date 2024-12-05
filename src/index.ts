@@ -4,6 +4,14 @@ import cors from 'cors'
 import swaggerUI from 'swagger-ui-express'
 import swaggerDoc from '../specification.json'
 import apiRouter from './routes/api'
+import dotenv from "dotenv"
+import { initDB, cleanupDB } from "./db"
+
+dotenv.config({
+	path: `.env`
+})
+  
+initDB()
 
 async function main() {
 	const app = express()
@@ -26,5 +34,10 @@ async function main() {
 	console.log(`🚀 Server ready at http://localhost:4000`)
 	console.log(`🤯 Documentation ready at http://localhost:4000/docs`)
 }
+
+
+process.on('SIGTERM', () => {
+	cleanupDB()
+})
 
 main()
