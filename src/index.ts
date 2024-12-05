@@ -3,11 +3,14 @@ import http from 'http'
 import cors from 'cors'
 import swaggerUI from 'swagger-ui-express'
 import swaggerDoc from '../specification.json'
+import apiRouter from './routes/api'
 
 async function main() {
 	const app = express()
 	app.use(cors())
 	const httpServer = http.createServer(app)
+
+	app.use('/api', apiRouter)
 
 	app.get('/liveliness', (req, res) => {
 		res.status(200)

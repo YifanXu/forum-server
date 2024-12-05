@@ -1,8 +1,12 @@
 import express from 'express';
 import { AuthToken, Forum, ForumStats, Post, Thread, User } from './types';
 
-const app = express();
-app.use(express.json());
+
+const router = express.Router()
+
+router.get('/', (req, res) => {
+	res.send('Hello world!')
+})
 
 // Sample data arrays
 const forums: Forum[] = [];
@@ -13,11 +17,11 @@ let session: AuthToken | null = null;
 
 
 // Basic route
-app.get('/', (req, res) => {
+router.get('/', (req, res) => {
     res.send('Hello world!');
 });
 
-app.get('/forumStats', (req, res) => {
+router.get('/forumStats', (req, res) => {
     const stats: ForumStats = {
         totalUsers: users.length,
         totalThreads: threads.length,
@@ -27,23 +31,23 @@ app.get('/forumStats', (req, res) => {
     res.json(stats);
 });
 
-app.get('/threadFeed', (req, res) => {
+router.get('/threadFeed', (req, res) => {
     const page = parseInt(req.query.page as string) || 0;
     const feed = threads.slice(page * 20, (page + 1) * 20);
     res.json(feed);
 });
 
-app.get('/postFeed', (req, res) => {
+router.get('/postFeed', (req, res) => {
     const page = parseInt(req.query.page as string) || 0;
     const feed = posts.slice(page * 20, (page + 1) * 20);
     res.json(feed);
 });
 
-app.get('/forums', (req, res) => {
+router.get('/forums', (req, res) => {
     res.json(forums);
 });
 
-app.get('/forums/:forumId', (req, res) => {
+router.get('/forums/:forumId', (req, res) => {
     const forum = forums.find(f => f.id === parseInt(req.params.forumId));
     if (forum) {
         res.json(forum);
@@ -52,7 +56,7 @@ app.get('/forums/:forumId', (req, res) => {
     }
 });
 
-app.get('/forums/:forumId/threads', (req, res) => {
+router.get('/forums/:forumId/threads', (req, res) => {
     const forumId = parseInt(req.params.forumId);
     const page = parseInt(req.query.page as string) || 0;
     const forumThreads = threads.filter(t => t.parentForumId === forumId)
@@ -60,7 +64,7 @@ app.get('/forums/:forumId/threads', (req, res) => {
     res.json(forumThreads);
 });
 
-app.get('/threads/:threadId', (req, res) => {
+router.get('/threads/:threadId', (req, res) => {
     const thread = threads.find(t => t.id === parseInt(req.params.threadId));
     if (thread) {
         res.json(thread);
@@ -69,7 +73,7 @@ app.get('/threads/:threadId', (req, res) => {
     }
 });
 
-app.get('/threads/:threadId/posts', (req, res) => {
+router.get('/threads/:threadId/posts', (req, res) => {
     const threadId = parseInt(req.params.threadId);
     const page = parseInt(req.query.page as string) || 0;
     const threadPosts = posts.filter(p => p.threadId === threadId)
@@ -77,7 +81,7 @@ app.get('/threads/:threadId/posts', (req, res) => {
     res.json(threadPosts);
 });
 
-app.get('/users/:userId', (req, res) => {
+router.get('/users/:userId', (req, res) => {
     const user = users.find(u => u.id === parseInt(req.params.userId));
     if (user) {
         res.json(user);
@@ -86,13 +90,13 @@ app.get('/users/:userId', (req, res) => {
     }
 });
 
-app.get('/users/:userId/posts', (req, res) => {
+router.get('/users/:userId/posts', (req, res) => {
     const userId = parseInt(req.params.userId);
     const userPosts = posts.filter(p => p.author.id === userId);
     res.json(userPosts);
 });
 
-app.put('/users/:userId', (req, res) => {
+router.put('/users/:userId', (req, res) => {
     const user = users.find(u => u.id === parseInt(req.params.userId));
     if (user) {
         Object.assign(user, req.body);
@@ -102,7 +106,7 @@ app.put('/users/:userId', (req, res) => {
     }
 });
 
-app.post('/forums/:forumId/threads', (req, res) => {
+router.post('/forums/:forumId/threads', (req, res) => {
     const { title, content } = req.body;
     const forumId = parseInt(req.params.forumId);
     const newThread: Thread = {
@@ -130,7 +134,7 @@ app.post('/forums/:forumId/threads', (req, res) => {
     res.status(201).json(newThread);
 });
 
-app.post('/threads/:threadId/reply', (req, res) => {
+router.post('/threads/:threadId/reply', (req, res) => {
     const { content } = req.body;
     const threadId = parseInt(req.params.threadId);
     const newPost: Post = {
@@ -151,16 +155,18 @@ app.post('/threads/:threadId/reply', (req, res) => {
     }
 });
 
-app.post('/forums/:forumId/subscribe', (req, res) => {
+router.post('/forums/:forumId/subscribe', (req, res) => {
     const { subscribed } = req.body;
     const forumId = parseInt(req.params.forumId);
     // Simulate subscription
     res.status(204).send();
 });
 
-app.post('/threads/:threadId/subscribe', (req, res) => {
+router.post('/threads/:threadId/subscribe', (req, res) => {
     const { subscribed } = req.body;
     const threadId = parseInt(req.params.threadId);
     // Simulate subscription
     res.status(204).send();
 });
+
+export default router
