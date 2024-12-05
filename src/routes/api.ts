@@ -1,22 +1,100 @@
-import express from 'express';
-import { AuthToken, Forum, ForumStats, Post, Thread, User } from './types';
+import express, { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcrypt';
+import passport from 'passport';
+import session from 'express-session';
+import pool from '../db';  // Import the pool for DB interaction
+import initializePassport from '../passport-config';
+import { AuthToken, Forum, ForumStats, Post, Thread } from './types';
 
-
-const router = express.Router()
-
-router.get('/', (req, res) => {
-	res.send('Hello world!')
-})
+const router = express();
 
 // Sample data arrays
 const forums: Forum[] = [];
 const users: User[] = [];
 const threads: Thread[] = [];
 const posts: Post[] = [];
-let session: AuthToken | null = null;
+let sessionData: AuthToken | null = null;
 
+interface RegisterRequestBody {
+    username: string;
+    firstname: string;
+    lastname: string;
+    password: string;
+}
 
-// Basic route
+interface User {
+    id: string;
+    username: string;
+    firstname: string;
+    lastname: string;
+    password: string;
+}
+
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
+
+router.set('view-engine', 'ejs');
+router.use(express.urlencoded({ extended: false }));
+router.use(session({
+    secret: process.env.SESSION_SECRET || 'default-secret',
+    resave: false,
+    saveUninitialized: false
+}));
+
+router.use(passport.initialize());
+router.use(passport.session());
+
+// Initialize Passport with database functions
+initializePassport(
+    passport,
+    (username: string) => pool.query('SELECT * FROM users WHERE username = ?', [username]),
+    (id: string) => pool.query('SELECT * FROM users WHERE id = ?', [id])
+);
+
+// Route for homepage
+router.get('/', (req: Request, res: Response) => {
+    res.render('index.ejs');
+});
+
+// Login route
+router.get('/login', checkNotAuthenticated, (req: Request, res: Response) => {
+    res.render('login.ejs');
+});
+
+router.post('/login', checkNotAuthenticated, passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/login',
+    failureFlash: true
+}));
+
+// Registration routes
+router.get('/register', checkNotAuthenticated, (req: Request, res: Response) => {
+    res.render('register.ejs');
+});
+
+router.post('/register', checkNotAuthenticated, async (req: Request<{}, {}, RegisterRequestBody>, res: Response) => {
+    const { username, firstname, lastname, password } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query(
+            'INSERT INTO users (username, firstname, lastname, password) VALUES (?, ?, ?, ?)',
+            [username, firstname, lastname, hashedPassword]
+        );
+        res.redirect('/login');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/register');
+    }
+});
+
+function checkNotAuthenticated(req: Request, res: Response, next: NextFunction) {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+        return res.redirect('/');
+    }
+    next();
+}
+
 router.get('/', (req, res) => {
     res.send('Hello world!');
 });
@@ -82,7 +160,8 @@ router.get('/threads/:threadId/posts', (req, res) => {
 });
 
 router.get('/users/:userId', (req, res) => {
-    const user = users.find(u => u.id === parseInt(req.params.userId));
+    const userId = req.params.userId; // Keep as string
+    const user = users.find(u => String(u.id) === userId); // Convert both to strings
     if (user) {
         res.json(user);
     } else {
@@ -97,9 +176,10 @@ router.get('/users/:userId/posts', (req, res) => {
 });
 
 router.put('/users/:userId', (req, res) => {
-    const user = users.find(u => u.id === parseInt(req.params.userId));
+    const userId = req.params.userId; // Keep as string
+    const user = users.find(u => String(u.id) === userId); // Convert both to strings
     if (user) {
-        Object.assign(user, req.body);
+        Object.assign(user, req.body); // Merge incoming updates into the user object
         res.json(user);
     } else {
         res.status(404).send('User not found');
@@ -116,15 +196,15 @@ router.post('/forums/:forumId/threads', (req, res) => {
         postCount: 1,
         initialPost: {
             id: posts.length + 1,
-			threadId: threads.length + 1,
-            author: session!.user,
+            threadId: threads.length + 1,
+            author: sessionData!.user,
             time: Date.now(),
             content
         },
         lastPost: {
             id: posts.length + 1,
-			threadId: threads.length + 1,
-            author: session!.user,
+            threadId: threads.length + 1,
+            author: sessionData!.user,
             time: Date.now(),
             content
         }
@@ -139,8 +219,8 @@ router.post('/threads/:threadId/reply', (req, res) => {
     const threadId = parseInt(req.params.threadId);
     const newPost: Post = {
         id: posts.length + 1,
-		threadId: threads.length + 1,
-        author: session!.user,
+        threadId: threads.length + 1,
+        author: sessionData!.user,
         time: Date.now(),
         content
     };
@@ -169,4 +249,4 @@ router.post('/threads/:threadId/subscribe', (req, res) => {
     res.status(204).send();
 });
 
-export default router
+export default router;
