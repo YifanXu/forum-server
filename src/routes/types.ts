@@ -41,7 +41,7 @@ export type Post = {
     parentThreadId?: number, // Optional for list of posts in thread
     parentThreadTitle?: string, // Optional for list of posts in thread
     parentThreadForum?: string, // Optional for list of posts in thread
-
+    parentThreadForumId?: string,
     id: number,
     author: User,
     time: number,
@@ -54,4 +54,9 @@ export type User = {
     name: string,
     flair: string,
     pic: string,
+
+    // Only include when getting user by id (getuser)
+	registered?: number,
+	threadCount?: number,
+	postCount?: number
 }

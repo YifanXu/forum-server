@@ -10,10 +10,10 @@ import { initDB, cleanupDB } from "./db"
 dotenv.config({
 	path: `.env`
 })
-  
-initDB()
 
 async function main() {
+	await initDB()
+	
 	const app = express()
 	app.use(cors())
 	const httpServer = http.createServer(app)

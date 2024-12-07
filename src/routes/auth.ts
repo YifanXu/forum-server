@@ -3,6 +3,7 @@ import { db_middleware } from '../db'
 import mysql from 'mysql2/promise'
 import crypto from 'crypto'
 import moment from 'moment'
+import { statCache } from './api'
 
 const hashIterations = 1000;
 const keylen = 100;
@@ -46,8 +47,8 @@ async function createSession(connection: mysql.Connection, userId: number) {
 	encrypted += cipher.final('base64');
 
 	return {
-		Token: `${iv.toString('base64')}.${encrypted}`,
-		ExpireAt: createTime.add(process.env.SESSION_DURATION, 'minutes').toISOString()
+		token: `${iv.toString('base64')}.${encrypted}`,
+		expireAt: createTime.add(process.env.SESSION_DURATION, 'minutes').toISOString()
 	}
 }
 
@@ -67,7 +68,7 @@ async function validateSession (connection: mysql.Connection, session?: string) 
 		return -1
 	}
 
-	// Decrypt Token
+	// Decrypt token
 	const ivEncoded = session.substring(0, seperatorIndex)
 	const encryptEncoded = session.substring(seperatorIndex + 1)
 
@@ -121,35 +122,18 @@ export async function sessionMiddleware (req: Request, res: Response, next: Next
 		res.status(401).send('Missing or invalid session token')
 		return
 	}
+	res.locals.userId = id
+	next()
+}
 
-	const assumeTarget = req.get('as_user')
-	if (assumeTarget) {
-		let assumeId: number = parseInt(assumeTarget)
-		if (isNaN(assumeId)) {
-			// Look up user
-			const [resultsRaw, fields] = await connection.query(`SELECT user_id FROM users WHERE username = ?;`, [assumeTarget])
-			const results = resultsRaw as mysql.RowDataPacket[]
-			if (results.length > 0) {
-				assumeId = results[0].user_id
-			}
-			else {
-				res.status(400).send('Header "as_user" must be an integer')
-				return
-			}
-		}
-		
-		// Verify admin status
-		const [resultsRaw, fields] = await connection.execute(`SELECT type FROM users WHERE user_id = ?`, [id])
-		const results = resultsRaw as mysql.RowDataPacket[]
-		if (results.length > 0 && results[0].type == 2) {
-			res.locals.userId = assumeId
-		}
-		else {
-			res.status(401).send('Header "as_user" must be used with an administrator access')
-			return
-		}
-	}
-	else {
+export async function optionalSessionMiddleware(req: Request, res:Response, next: NextFunction) {
+	const connection: mysql.PoolConnection = res.locals.db
+
+	const session = req.get('Authorization')
+
+	const id = await validateSession(connection, session)
+
+	if (id != -1) {
 		res.locals.userId = id
 	}
 	next()
@@ -200,11 +184,11 @@ router.post('/register', express.json() , async (req, res) => {
 
 	await connection.execute(`INSERT INTO users (username, salt, hash) VALUES (?, ?, ?);`, [username, salt, hash])
 
-	const [idRaw, fields] = await connection.query(`SELECT LAST_INSERT_ID();`)
-
-	const userId = (idRaw as mysql.RowDataPacket)[0]['LAST_INSERT_ID()']
-
-	await connection.execute(`INSERT INTO player_data (user_id) VALUES (?);`, [userId])
+	// Increment stats
+	if (statCache)
+	{
+		statCache.totalUsers++
+	}
 
 	res.status(201).send()
 })
@@ -219,7 +203,7 @@ router.post('/login', express.json(), async (req, res) => {
 		return
 	}
 
-	const [resultsRaw, fields] = await connection.query(`SELECT user_id, username, salt, hash, type FROM users WHERE username = ?;`, [username]);
+	const [resultsRaw, fields] = await connection.query(`SELECT * FROM users WHERE username = ?;`, [username]);
 	const results = resultsRaw as mysql.RowDataPacket[]
 
 	if (results.length === 0) {
@@ -239,7 +223,12 @@ router.post('/login', express.json(), async (req, res) => {
 
 	res.send({
 		...session,
-		Type: type
+		user: {
+			user_id: results[0].user_id,
+			username: username,
+			flair: results[0].flair,
+			pic: results[0].pic
+		}
 	})
 })
 

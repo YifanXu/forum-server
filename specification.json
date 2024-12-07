@@ -346,6 +346,52 @@
 			}
 		  }
 		}
+	  },
+	  "/users/{userId}/posts": {
+		"get": {
+			"summary": "Get recent posts from a user",
+			"parameters": [
+				{
+					"name": "userId",
+					"in": "path",
+					"required": true,
+					"description": "ID of the user to fetch details for",
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"responses": {
+				"200": {
+					"description": "ok"
+				}
+			}
+		}
+	  },
+	  "/threads/{threadId}/reply": {
+		"post": {
+			"summary": "Post a reply to a post",
+			"parameters": [
+				{
+					"name": "threadId",
+					"in": "path",
+					"required": true,
+					"description": "thread to post the reply in",
+					"schema": {
+						"type": "integer"
+					}
+				},
+				{
+					"name": "content",
+					"in": "query",
+					"required": true,
+					"description": "thread to post the reply in",
+					"schema": {
+						"type": "integer"
+					}
+				}
+			]
+		}
 	  }
 	},
 	"components": {
@@ -418,15 +464,6 @@
 			  "type": "integer"
 			},
 			"username": {
-			  "type": "string"
-			},
-			"email": {
-			  "type": "string"
-			},
-			"firstname": {
-			  "type": "string"
-			},
-			"lastname": {
 			  "type": "string"
 			},
 			"createdAt": {
