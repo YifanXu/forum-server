@@ -1,25 +1,482 @@
 {
-	"openapi":"3.0.3",
+	"openapi": "3.0.3",
 	"info": {
-	  "title":"Forum Server",
-	  "version":"1.0"
+	  "title": "Forum Server",
+	  "version": "1.0"
 	},
 	"servers": [
-	  {"url":"http://localhost:4000/api"}
+	  {
+		"url": "http://localhost:4000/api"
+	  }
 	],
 	"paths": {
-		"/": {
-			"summary": "Test Endpoint",
-			"description": "Test Endpoint",
-			"get": {
-				"description": "",
-				"parameters": [],
-				"responses": {
-					"200": {
-						"description": "OK"
+	  "/": {
+		"get": {
+		  "summary": "Home Page",
+		  "description": "Render the homepage of the forum.",
+		  "responses": {
+			"200": {
+			  "description": "Homepage rendered successfully"
+			}
+		  }
+		}
+	  },
+	  "/auth/login": {
+		"post": {
+		  "summary": "Login User",
+		  "description": "Authenticate a user with username and password.",
+		  "requestBody": {
+			"required": true,
+			"content": {
+			  "application/x-www-form-urlencoded": {
+				"schema": {
+				  "type": "object",
+				  "properties": {
+					"username": {
+					  "type": "string"
+					},
+					"password": {
+					  "type": "string"
 					}
+				  },
+				  "required": ["username", "password"]
+				}
+			  }
+			}
+		  },
+		  "responses": {
+			"200": {
+			  "description": "Redirect to home page after successful login"
+			},
+			"401": {
+			  "description": "Authentication failed, redirected back to login"
+			}
+		  }
+		}
+	  },
+	  "/auth/register": {
+		"post": {
+		  "summary": "Register User",
+		  "description": "Register a new user with username, email, and password.",
+		  "requestBody": {
+			"required": true,
+			"content": {
+			  "application/x-www-form-urlencoded": {
+				"schema": {
+				  "type": "object",
+				  "properties": {
+					"username": {
+					  "type": "string"
+					},
+					"password": {
+					  "type": "string"
+					}
+				  },
+				  "required": ["username", "password"]
+				}
+			  }
+			}
+		  },
+		  "responses": {
+			"201": {
+			  "description": "Redirect to login page after successful registration"
+			},
+			"500": {
+			  "description": "Error during registration, user not created"
+			}
+		  }
+		}
+	  },
+	  "/forumStats": {
+		"get": {
+		  "summary": "Forum Statistics",
+		  "description": "Fetch statistics about the forum, including total users, threads, posts, and latest threads.",
+		  "responses": {
+			"200": {
+			  "description": "Statistics fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "object",
+					"properties": {
+					  "totalUsers": {
+						"type": "integer"
+					  },
+					  "totalThreads": {
+						"type": "integer"
+					  },
+					  "totalPosts": {
+						"type": "integer"
+					  },
+					  "latestThreads": {
+						"type": "array",
+						"items": {
+						  "$ref": "#/components/schemas/Thread"
+						}
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "/threadFeed": {
+		"get": {
+		  "summary": "Thread Feed",
+		  "description": "Get a paginated feed of threads.",
+		  "parameters": [
+			{
+			  "name": "page",
+			  "in": "query",
+			  "description": "Page number for pagination",
+			  "required": false,
+			  "schema": {
+				"type": "integer",
+				"default": 0
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "Thread feed fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "array",
+					"items": {
+					  "$ref": "#/components/schemas/Thread"
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "/postFeed": {
+		"get": {
+		  "summary": "Post Feed",
+		  "description": "Get a paginated feed of posts.",
+		  "parameters": [
+			{
+			  "name": "page",
+			  "in": "query",
+			  "description": "Page number for pagination",
+			  "required": false,
+			  "schema": {
+				"type": "integer",
+				"default": 0
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "Post feed fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "array",
+					"items": {
+					  "$ref": "#/components/schemas/Post"
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "/forums": {
+		"get": {
+		  "summary": "Get All Forums",
+		  "description": "Fetch all forums.",
+		  "responses": {
+			"200": {
+			  "description": "Forums fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "array",
+					"items": {
+					  "$ref": "#/components/schemas/Forum"
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "/forums/{forumId}": {
+		"get": {
+		  "summary": "Get Specific Forum",
+		  "description": "Fetch a specific forum by ID.",
+		  "parameters": [
+			{
+			  "name": "forumId",
+			  "in": "path",
+			  "required": true,
+			  "description": "ID of the forum to fetch",
+			  "schema": {
+				"type": "integer"
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "Forum fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"$ref": "#/components/schemas/Forum"
+				  }
+				}
+			  }
+			},
+			"404": {
+			  "description": "Forum not found"
+			}
+		  }
+		}
+	  },
+	  "/threads/{threadId}": {
+		"get": {
+		  "summary": "Get Specific Thread",
+		  "description": "Fetch a specific thread by ID.",
+		  "parameters": [
+			{
+			  "name": "threadId",
+			  "in": "path",
+			  "required": true,
+			  "description": "ID of the thread",
+			  "schema": {
+				"type": "integer"
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "Thread fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"$ref": "#/components/schemas/Thread"
+				  }
+				}
+			  }
+			},
+			"404": {
+			  "description": "Thread not found"
+			}
+		  }
+		}
+	  },
+	  "/threads/{threadId}/posts": {
+		"get": {
+		  "summary": "Get Posts in Thread",
+		  "description": "Fetch posts in a specific thread.",
+		  "parameters": [
+			{
+			  "name": "threadId",
+			  "in": "path",
+			  "required": true,
+			  "description": "ID of the thread",
+			  "schema": {
+				"type": "integer"
+			  }
+			},
+			{
+			  "name": "page",
+			  "in": "query",
+			  "description": "Page number for pagination",
+			  "required": false,
+			  "schema": {
+				"type": "integer",
+				"default": 0
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "Posts fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"type": "array",
+					"items": {
+					  "$ref": "#/components/schemas/Post"
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "/users/{userId}": {
+		"get": {
+		  "summary": "Get User Information",
+		  "description": "Fetch details of a user by their ID.",
+		  "parameters": [
+			{
+			  "name": "userId",
+			  "in": "path",
+			  "required": true,
+			  "description": "ID of the user to fetch details for",
+			  "schema": {
+				"type": "integer"
+			  }
+			}
+		  ],
+		  "responses": {
+			"200": {
+			  "description": "User information fetched successfully",
+			  "content": {
+				"application/json": {
+				  "schema": {
+					"$ref": "#/components/schemas/User"
+				  }
+				}
+			  }
+			},
+			"404": {
+			  "description": "User not found"
+			}
+		  }
+		}
+	  },
+	  "/users/{userId}/posts": {
+		"get": {
+			"summary": "Get recent posts from a user",
+			"parameters": [
+				{
+					"name": "userId",
+					"in": "path",
+					"required": true,
+					"description": "ID of the user to fetch details for",
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"responses": {
+				"200": {
+					"description": "ok"
 				}
 			}
 		}
+	  },
+	  "/threads/{threadId}/reply": {
+		"post": {
+			"summary": "Post a reply to a post",
+			"parameters": [
+				{
+					"name": "threadId",
+					"in": "path",
+					"required": true,
+					"description": "thread to post the reply in",
+					"schema": {
+						"type": "integer"
+					}
+				},
+				{
+					"name": "content",
+					"in": "query",
+					"required": true,
+					"description": "thread to post the reply in",
+					"schema": {
+						"type": "integer"
+					}
+				}
+			]
+		}
+	  }
+	},
+	"components": {
+	  "schemas": {
+		"Thread": {
+		  "type": "object",
+		  "properties": {
+			"threadId": {
+			  "type": "integer"
+			},
+			"title": {
+			  "type": "string"
+			},
+			"creator": {
+			  "type": "string"
+			},
+			"createdAt": {
+			  "type": "string",
+			  "format": "date-time"
+			},
+			"updatedAt": {
+			  "type": "string",
+			  "format": "date-time"
+			}
+		  }
+		},
+		"Post": {
+		  "type": "object",
+		  "properties": {
+			"postId": {
+			  "type": "integer"
+			},
+			"threadId": {
+			  "type": "integer"
+			},
+			"creator": {
+			  "type": "string"
+			},
+			"content": {
+			  "type": "string"
+			},
+			"createdAt": {
+			  "type": "string",
+			  "format": "date-time"
+			},
+			"updatedAt": {
+			  "type": "string",
+			  "format": "date-time"
+			}
+		  }
+		},
+		"Forum": {
+		  "type": "object",
+		  "properties": {
+			"forumId": {
+			  "type": "integer"
+			},
+			"name": {
+			  "type": "string"
+			},
+			"description": {
+			  "type": "string"
+			}
+		  }
+		},
+		"User": {
+		  "type": "object",
+		  "properties": {
+			"userId": {
+			  "type": "integer"
+			},
+			"username": {
+			  "type": "string"
+			},
+			"createdAt": {
+			  "type": "string",
+			  "format": "date-time"
+			},
+			"updatedAt": {
+			  "type": "string",
+			  "format": "date-time"
+			}
+		  }
+		}
+	  }
 	}
-  }
+}
+  
