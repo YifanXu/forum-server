@@ -9,7 +9,7 @@ const pageLimit: number = 10
 
 const router = express();
 
-function getPage (pageRaw: string): number {
+function getPage(pageRaw: string): number {
 	if (!pageRaw) return 1
 	const page = parseInt(pageRaw)
 	return isNaN(page) ? 1 : page
@@ -21,11 +21,11 @@ router.use('/auth', authRouter)
 
 // Route for homepage
 router.get('/', (req: Request, res: Response) => {
-    res.render('index.ejs');
+	res.render('index.ejs');
 })
 
 router.get('/', (req, res) => {
-    res.send('Hello world!');
+	res.send('Hello world!');
 });
 
 
@@ -33,21 +33,21 @@ var statPromise: Promise<ForumStats> | null = null
 export var statCache: ForumStats | null
 async function fetchStats(): Promise<ForumStats> {
 	const db = await pool.getConnection()
-	
+
 	const stats: ForumStats = {
-        totalUsers: ((await db.query(`SELECT COUNT(*) as count FROM users`))[0] as RowDataPacket[])[0].count,
-        totalThreads: ((await db.query(`SELECT COUNT(*) as count FROM thread`))[0] as RowDataPacket[])[0].count,
-        totalPosts: ((await db.query(`SELECT COUNT(*) as count FROM post`))[0] as RowDataPacket[])[0].count,
-        latestThreads: []
-    };
+		totalUsers: ((await db.query(`SELECT COUNT(*) as count FROM users`))[0] as RowDataPacket[])[0].count,
+		totalThreads: ((await db.query(`SELECT COUNT(*) as count FROM thread`))[0] as RowDataPacket[])[0].count,
+		totalPosts: ((await db.query(`SELECT COUNT(*) as count FROM post`))[0] as RowDataPacket[])[0].count,
+		latestThreads: []
+	};
 
 	stats.latestThreads = bundleOutput(await db.query(`
-		SELECT T.*, F.name AS parentForumName, ${generateSelector({ 
-			'initialPost': [ 'post', 'P1'],
-			'lastPost': [ 'post', 'P2'],
-			'initialPost.author': ['users', 'U1'],
-			'lastPost.author': ['users', 'U2'],
-		})} FROM thread T
+		SELECT T.*, F.name AS parentForumName, ${generateSelector({
+		'initialPost': ['post', 'P1'],
+		'lastPost': ['post', 'P2'],
+		'initialPost.author': ['users', 'U1'],
+		'lastPost.author': ['users', 'U2'],
+	})} FROM thread T
 		INNER JOIN forum F ON T.parentForumId = F.id
 		LEFT JOIN post P1 ON T.initialPost = P1.id
 		LEFT JOIN post P2 ON T.lastPost = P2.id
@@ -72,19 +72,19 @@ router.get('/forumStats', async (req, res) => {
 
 	statPromise = fetchStats()
 	statCache = await statPromise
-	res.json(statCache) 
+	res.json(statCache)
 });
 
 router.get('/threadFeed', db_middleware, sessionMiddleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	const userId = res.locals.userId
 	const data = bundleOutput(await connection.execute(`
-		SELECT T.*, F.name AS parentForumName, ${generateSelector({ 
-			'initialPost': [ 'post', 'P1'],
-			'lastPost': [ 'post', 'P2'],
-			'initialPost.author': ['users', 'U1'],
-			'lastPost.author': ['users', 'U2'],
-		})} FROM thread T
+		SELECT T.*, F.name AS parentForumName, ${generateSelector({
+		'initialPost': ['post', 'P1'],
+		'lastPost': ['post', 'P2'],
+		'initialPost.author': ['users', 'U1'],
+		'lastPost.author': ['users', 'U2'],
+	})} FROM thread T
 		INNER JOIN forum F ON T.parentForumId = F.id
 		INNER JOIN \`user-forum\` UF ON UF.forumID = F.id 
 		LEFT JOIN post P1 ON T.initialPost = P1.id
@@ -100,14 +100,14 @@ router.get('/threadFeed', db_middleware, sessionMiddleware, async (req, res) => 
 
 router.get('/postFeed', db_middleware, optionalSessionMiddleware, async (req, res) => {
 	const userId = res.locals.userId
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	if (userId) {
-		
+
 	}
-	const data = userId 
-	? bundleOutput(await connection.execute(`
-		SELECT P.*, T.title AS parentThreadTitle, F.id AS parentForumId, F.name AS parentForumName, ${generateSelector({ 
-			'author': [ 'users', 'U'],
+	const data = userId
+		? bundleOutput(await connection.execute(`
+		SELECT P.*, T.title AS parentThreadTitle, F.id AS parentForumId, F.name AS parentForumName, ${generateSelector({
+			'author': ['users', 'U'],
 		})} FROM post P
 		INNER JOIN thread T ON T.id = P.threadID
 		INNER JOIN \`user-thread\` UT ON UT.threadID = T.id 
@@ -117,9 +117,9 @@ router.get('/postFeed', db_middleware, optionalSessionMiddleware, async (req, re
 		ORDER BY P.time ASC
 		LIMIT 10
 	`, [userId]))
-	: bundleOutput(await connection.query(`
-		SELECT P.*, T.title AS parentThreadTitle, F.id AS parentForumId, F.name AS parentForumName, ${generateSelector({ 
-			'author': [ 'users', 'U'],
+		: bundleOutput(await connection.query(`
+		SELECT P.*, T.title AS parentThreadTitle, F.id AS parentForumId, F.name AS parentForumName, ${generateSelector({
+			'author': ['users', 'U'],
 		})} FROM post P
 		INNER JOIN thread T ON T.id = P.threadID
 		INNER JOIN users U ON P.author = U.user_id
@@ -141,13 +141,13 @@ router.get('/forumsList', db_middleware, async (req, res) => {
 router.get('/forums', db_middleware, async (req, res) => {
 	const connection: mysql.PoolConnection = res.locals.db
 	const data = bundleOutput(await connection.query(`
-		SELECT F.*, ${generateSelector({ 
-			'lastUpdatedThread': [ 'thread', 'T' ], 
-			'lastUpdatedThread.initialPost': [ 'post', 'P1'],
-			'lastUpdatedThread.lastPost': [ 'post', 'P2'],
-			'lastUpdatedThread.initialPost.author': ['users', 'U1'],
-			'lastUpdatedThread.lastPost.author': ['users', 'U2'],
-		})} FROM forum F 
+		SELECT F.*, ${generateSelector({
+		'lastUpdatedThread': ['thread', 'T'],
+		'lastUpdatedThread.initialPost': ['post', 'P1'],
+		'lastUpdatedThread.lastPost': ['post', 'P2'],
+		'lastUpdatedThread.initialPost.author': ['users', 'U1'],
+		'lastUpdatedThread.lastPost.author': ['users', 'U2'],
+	})} FROM forum F 
 		LEFT JOIN thread T ON F.lastUpdatedThread = T.id
 		LEFT JOIN post P1 ON T.initialPost = P1.id
 		LEFT JOIN post P2 ON T.lastPost = P2.id
@@ -158,23 +158,23 @@ router.get('/forums', db_middleware, async (req, res) => {
 })
 
 router.get('/forums/:forumId', db_middleware, optionalSessionMiddleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	const { forumId } = req.params
 	const data = bundleOutput(await connection.execute(`
-		SELECT F.*, ${generateSelector({ 
-			'lastUpdatedThread': [ 'thread', 'T' ], 
-			'lastUpdatedThread.initialPost': [ 'post', 'P1'],
-			'lastUpdatedThread.lastPost': [ 'post', 'P2'],
-			'lastUpdatedThread.initialPost.author': ['users', 'U1'],
-			'lastUpdatedThread.lastPost.author': ['users', 'U2'],
-		})} FROM forum F 
+		SELECT F.*, ${generateSelector({
+		'lastUpdatedThread': ['thread', 'T'],
+		'lastUpdatedThread.initialPost': ['post', 'P1'],
+		'lastUpdatedThread.lastPost': ['post', 'P2'],
+		'lastUpdatedThread.initialPost.author': ['users', 'U1'],
+		'lastUpdatedThread.lastPost.author': ['users', 'U2'],
+	})} FROM forum F 
 		LEFT JOIN thread T ON F.lastUpdatedThread = T.id
 		LEFT JOIN post P1 ON T.initialPost = P1.id
 		LEFT JOIN post P2 ON T.lastPost = P2.id
 		LEFT JOIN users U1 ON P1.author = U1.user_id
 		LEFT JOIN users U2 ON P2.author = U2.user_id
 		WHERE F.id = ?;
-	`, [ forumId ]))
+	`, [forumId]))
 	if (data.length === 0) {
 		res.status(404).send()
 		return
@@ -187,17 +187,17 @@ router.get('/forums/:forumId', db_middleware, optionalSessionMiddleware, async (
 	})
 });
 
-router.get('/forums/:forumId/threads',db_middleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+router.get('/forums/:forumId/threads', db_middleware, async (req, res) => {
+	const connection: mysql.PoolConnection = res.locals.db
 	const { forumId } = req.params
 	const page = getPage(req.query['page'] as string)
 	const data = bundleOutput(await connection.query(`
-		SELECT T.*, ${generateSelector({ 
-			'initialPost': [ 'post', 'P1'],
-			'lastPost': [ 'post', 'P2'],
-			'initialPost.author': ['users', 'U1'],
-			'lastPost.author': ['users', 'U2'],
-		})} FROM thread T
+		SELECT T.*, ${generateSelector({
+		'initialPost': ['post', 'P1'],
+		'lastPost': ['post', 'P2'],
+		'initialPost.author': ['users', 'U1'],
+		'lastPost.author': ['users', 'U2'],
+	})} FROM thread T
 		LEFT JOIN post P1 ON T.initialPost = P1.id
 		LEFT JOIN post P2 ON T.lastPost = P2.id
 		LEFT JOIN users U1 ON P1.author = U1.user_id
@@ -205,29 +205,28 @@ router.get('/forums/:forumId/threads',db_middleware, async (req, res) => {
 		WHERE T.parentForumId = ?
 		ORDER BY P2.time ASC
 		LIMIT ? OFFSET ?
-	`, [ parseInt(forumId), pageLimit, pageLimit * (page - 1)]))
+	`, [parseInt(forumId), pageLimit, pageLimit * (page - 1)]))
 	res.json(data)
 });
 
 router.get('/threads/:threadId', db_middleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	const { threadId } = req.params
 	const data = bundleOutput(await connection.query(`
-		SELECT T.*, F.name AS parentForumName, ${generateSelector({ 
-			'initialPost': [ 'post', 'P1'],
-			'lastPost': [ 'post', 'P2'],
-			'initialPost.author': ['users', 'U1'],
-			'lastPost.author': ['users', 'U2'],
-		})} FROM thread T
+		SELECT T.*, F.name AS parentForumName, ${generateSelector({
+		'initialPost': ['post', 'P1'],
+		'lastPost': ['post', 'P2'],
+		'initialPost.author': ['users', 'U1'],
+		'lastPost.author': ['users', 'U2'],
+	})} FROM thread T
 		INNER JOIN forum F ON T.parentForumId = F.id
 		LEFT JOIN post P1 ON T.initialPost = P1.id
 		LEFT JOIN post P2 ON T.lastPost = P2.id
 		LEFT JOIN users U1 ON P1.author = U1.user_id
 		LEFT JOIN users U2 ON P2.author = U2.user_id
 		WHERE T.id = ?;
-	`, [ threadId ]))
-	if (data.length === 0) 
-	{
+	`, [threadId]))
+	if (data.length === 0) {
 		res.status(404).send()
 		return
 	}
@@ -240,31 +239,31 @@ router.get('/threads/:threadId', db_middleware, async (req, res) => {
 });
 
 router.get('/threads/:threadId/posts', db_middleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	const { threadId } = req.params
 	const page = getPage(req.query['page'] as string)
 	const data = bundleOutput(await connection.query(`
-		SELECT P.*, ${generateSelector({ 
-			'author': [ 'users', 'U'],
-		})} FROM post P
+		SELECT P.*, ${generateSelector({
+		'author': ['users', 'U'],
+	})} FROM post P
 		INNER JOIN thread T ON T.id = P.threadID
 		INNER JOIN users U ON P.author = U.user_id
 		WHERE T.id = ?
 		ORDER BY P.time ASC
 		LIMIT ? OFFSET ?
-	`, [ threadId, pageLimit, pageLimit * (page - 1)]))
+	`, [threadId, pageLimit, pageLimit * (page - 1)]))
 	res.json(data)
 });
 
-router.get('/users/:userId', db_middleware,async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+router.get('/users/:userId', db_middleware, async (req, res) => {
+	const connection: mysql.PoolConnection = res.locals.db
 	const { userId } = req.params
 	const data = (await connection.query(`
 		SELECT user_id, username, flair, pic, registered, threadCount, postCount
 		FROM users WHERE user_id = ?
 	`, [userId]))[0] as RowDataPacket[]
 	if (data.length === 0) res.status(404).send()
-		else res.json(data[0])
+	else res.json(data[0])
 });
 
 router.put('/users/:userId', express.json(), db_middleware, sessionMiddleware, async (req, res) => {
@@ -290,7 +289,7 @@ router.put('/users/:userId', express.json(), db_middleware, sessionMiddleware, a
 })
 
 router.get('/users/:userId/posts', db_middleware, async (req, res) => {
-    const connection: mysql.PoolConnection = res.locals.db
+	const connection: mysql.PoolConnection = res.locals.db
 	const { userId } = req.params
 	const data = bundleOutput(await connection.query(`
 		SELECT P.*, T.title AS parentThreadTitle, F.id AS parentForumId, F.name AS parentForumName FROM post P
@@ -304,25 +303,23 @@ router.get('/users/:userId/posts', db_middleware, async (req, res) => {
 })
 
 router.post('/threads/:threadId/reply', express.json(), db_middleware, sessionMiddleware, async (req, res) => {
-    const { content } = req.body
+	const { content } = req.body
 	const userId: number = res.locals.userId
 	const connection: mysql.PoolConnection = res.locals.db
-    const threadId = parseInt(req.params.threadId)
+	const threadId = parseInt(req.params.threadId)
 
 	if (!content) {
 		res.status(400).send('Must include content')
 	}
 
-	if (isNaN(threadId))
-	{
+	if (isNaN(threadId)) {
 		res.status(400).send('Invalid thread id')
 		return
 	}
 
 	// Make sure thread exists first
 	const threadQuery = (await connection.execute(`SELECT parentForumId, postCount FROM thread WHERE id = ?`, [threadId]))[0] as RowDataPacket[]
-	if (threadQuery.length === 0)
-	{
+	if (threadQuery.length === 0) {
 		res.status(404).send(`No thread with id ${threadId}`)
 		return
 	}
@@ -347,18 +344,16 @@ router.post('/forums/:forumId/newthread', express.json(), db_middleware, session
 	const { title, content } = req.body
 	const userId: number = res.locals.userId
 	const connection: mysql.PoolConnection = res.locals.db
-    const forumId = parseInt(req.params.forumId)
+	const forumId = parseInt(req.params.forumId)
 
-	if (isNaN(forumId))
-	{
+	if (isNaN(forumId)) {
 		res.status(400).send('Invalid thread id')
 		return
 	}
 
 	// Make sure forum exists first
 	const thread = (await connection.execute(`SELECT id FROM forum WHERE id = ?`, [forumId]))[0] as RowDataPacket[]
-	if (thread.length === 0)
-	{
+	if (thread.length === 0) {
 		res.status(404).send(`No forum with id ${forumId}`)
 		return
 	}
@@ -377,8 +372,7 @@ router.post('/forums/:forumId/newthread', express.json(), db_middleware, session
 	await connection.execute('UPDATE forum SET threadCount = threadCount + 1, lastUpdatedThread = ? WHERE id = ?', [threadInsertRes.insertId, forumId])
 	await connection.query('COMMIT')
 
-	if (statCache)
-	{
+	if (statCache) {
 		statCache.totalThreads++
 		statCache.totalUsers++
 	}
@@ -387,8 +381,8 @@ router.post('/forums/:forumId/newthread', express.json(), db_middleware, session
 })
 
 router.post('/forums/:forumId/subscribe', express.json(), db_middleware, sessionMiddleware, (req, res) => {
-    const { subscribed } = req.body;
-    const { forumId } = req.params
+	const { subscribed } = req.body;
+	const { forumId } = req.params
 	const connection: mysql.PoolConnection = res.locals.db
 	const userId = res.locals.userId
 
@@ -398,13 +392,13 @@ router.post('/forums/:forumId/subscribe', express.json(), db_middleware, session
 	else {
 		connection.query('DELETE FROM `user-forum` WHERE userID = ? AND forumID = ?', [userId, forumId])
 	}
-	
+
 	res.status(200).send()
 });
 
 router.post('/threads/:threadId/subscribe', express.json(), db_middleware, sessionMiddleware, (req, res) => {
 	const { subscribed } = req.body;
-    const { threadId } = req.params
+	const { threadId } = req.params
 	const connection: mysql.PoolConnection = res.locals.db
 	const userId = res.locals.userId
 
@@ -416,8 +410,20 @@ router.post('/threads/:threadId/subscribe', express.json(), db_middleware, sessi
 	else {
 		connection.query('DELETE FROM `user-thread` WHERE userID = ? AND threadID = ?', [userId, threadId])
 	}
-	
+
 	res.status(200).send()
+})
+
+router.get('/error', (req, res) => {
+	throw new Error('oh no error')
+})
+
+router.use((err: any, req: Request, res: Response, next: NextFunction) => {
+	if (err) {
+		console.error(err)
+		return res.status(err.statusCode || 500).send(err.message);
+	}
+	next()
 });
 
 export default router;

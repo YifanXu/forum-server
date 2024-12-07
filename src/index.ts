@@ -27,12 +27,17 @@ async function main() {
 	// Serve documentations
 	app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 
+	if (process.env.HOST_CLIENT === 'TRUE' && process.env.CLIENT_PATH) {
+		console.log(`hosting static files at ${process.env.CLIENT_PATH}`)
+		app.use('/', express.static(process.env.CLIENT_PATH))
+	}
+
 	// Start Server
-	await new Promise<void>(resolve => httpServer.listen(4000, resolve))
+	await new Promise<void>(resolve => httpServer.listen(process.env.PORT, resolve))
 
 	// Signal ready
-	console.log(`🚀 Server ready at http://localhost:4000`)
-	console.log(`🤯 Documentation ready at http://localhost:4000/docs`)
+	console.log(`🚀 Server ready at http://localhost:${process.env.PORT}`)
+	console.log(`🤯 Documentation ready at http://localhost:${process.env.PORT}/docs`)
 }
 
 
